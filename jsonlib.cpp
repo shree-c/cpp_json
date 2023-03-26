@@ -4,7 +4,6 @@
 #include <memory>
 #include <vector>
 
-
 int main() {
   Json_obj s_obj;
   auto &x = s_obj;
@@ -22,7 +21,7 @@ int main() {
   auto num = dynamic_cast<Json_number *>(y->second.get());
   std::cout << num->get_value();
   auto b = ref_to_obj_map.find("hello");
-  auto b_v = dynamic_cast<Json_bool *> (b->second.get());
+  auto b_v = dynamic_cast<Json_bool *>(b->second.get());
   std::cout << b_v->get_value();
 
   //  Json_number hello = dynamic_cast<Json_number &>(y->second);

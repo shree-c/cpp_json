@@ -37,10 +37,19 @@ public:
 class Json_obj : public Json_entity {
 public:
   Data_type get_type() { return Data_type::OBJECT; };
-  std::map<std::string, std::unique_ptr<Json_entity>> &get_value() { return v; }
+  std::map<std::string, std::shared_ptr<Json_entity>> &get_value() { return v; }
 
 private:
-  std::map<std::string, std::unique_ptr<Json_entity>> v;
+  std::map<std::string, std::shared_ptr<Json_entity>> v;
+};
+
+class Json_arr : public Json_entity {
+public:
+  Data_type get_type() { return Data_type::ARRAY; };
+  std::vector<std::shared_ptr<Json_entity>> &get_value() { return v; }
+
+private:
+  std::vector<std::shared_ptr<Json_entity>> v;
 };
 
 class Json_number : public Json_entity {
