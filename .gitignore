@@ -1,1 +1,6 @@
 *.out
+results
+bin
+passed
+failed
+large_test_files/*

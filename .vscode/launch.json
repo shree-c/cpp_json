@@ -26,6 +26,11 @@
                 "description": "Set Disassembly Flavor to Intel",
                 "text": "-gdb-set disassembly-flavor intel",
                 "ignoreFailures": true
+            },
+            {
+                "description": "input ext",
+                "text": "exec run <",
+                "ignoreFailures": true
             }
             // {
             //     "description": "Compile with g++",
