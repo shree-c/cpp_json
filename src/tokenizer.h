@@ -107,8 +107,8 @@ inline bool Tokenizer::valid_no(const char &c) {
 }
 
 inline Token Tokenizer::gettoken() {
-  int c;
-  while ((c = getch()) == ' ' || c == '\t' || c == '\n')
+  int c = 0;
+  while ((c = getch()) == ' ' || c == '\t' || c == '\n' || c == '\r')
     ;
   if (c == -1) {
     return token_type = Token::END;
@@ -173,19 +173,61 @@ inline Token Tokenizer::gettoken() {
   // string
   if (c == '"') {
     last_token = "";
-    int prev = c;
-    while ((c = getch()) != '"' || prev == '\\') {
+    bool backslash_status = false;
+    bool unterminated = true;
+    bool hex_status = false;
+    int hex_count = 0;
+    while (unterminated) {
+      c = getch();
       if (c == -1) {
-        std::cerr << "Unterminated string" << std::endl;
-        std::exit(1);
+        throw "unterminated string, reached EOF";
       }
-      if (c == '\n') {
-        std::cout << last_token;
-        std::cerr << "new lines are not allowed inside strings" << std::endl;
-        std::exit(1);
+      // delete is not considered as control character but iscontrol returns true for it
+      if (std::iscntrl(c) && c != 127) {
+        throw "control character inside string";
       }
-      last_token.push_back(c);
-      prev = c;
+      if (backslash_status) {
+        if (hex_status) {
+          if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') ||
+              (c >= 'a' && c <= 'f')) {
+            hex_count++;
+            if (hex_count == 4) {
+              hex_count = 0;
+              hex_status = false;
+              backslash_status = false;
+            }
+            last_token.push_back(c);
+            continue;
+          }
+          throw "illegal hex character";
+        } else {
+          if (c == '"' || c == '\\' || c == 'b' || c == 'f' || c == 'n' ||
+              c == 'r' || c == 't' || c == '/') {
+            backslash_status = false;
+            last_token.push_back(c);
+            continue;
+          }
+          if (c == 'u') {
+            hex_status = true;
+            last_token.push_back(c);
+            continue;
+          }
+        }
+        throw "unknown character after backslash";
+      } else {
+        if (c == '"') {
+          unterminated = false;
+          continue;
+        }
+        if (c == '\\') {
+          backslash_status = true;
+          last_token.push_back(c);
+          continue;
+        }
+        last_token.push_back(c);
+        continue;
+      }
+      throw "unknown character, missed all checks\n";
     }
     return token_type = Token::STRING;
   }

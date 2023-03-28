@@ -4,3 +4,4 @@ bin
 passed
 failed
 large_test_files/*
+callgrind*

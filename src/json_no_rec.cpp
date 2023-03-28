@@ -9,6 +9,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+
 bool includes(std::vector<Token> &expected_token, Token t) {
   for (Token x : expected_token) {
     if (t == x)
@@ -57,7 +58,7 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
       } else if (context.back() == Context::INSIDE_ARRAY) {
         std::shared_ptr<Json_arr> temp_arr_ptr =
             std::dynamic_pointer_cast<Json_arr>(mouth);
-        temp_arr_ptr->get_value().push_back(new_obj);
+       temp_arr_ptr->get_value().push_back(new_obj);
       }
       mouth_stack.push_back(new_obj);
       //------------------
@@ -300,10 +301,10 @@ int main() {
   auto start = std::chrono::high_resolution_clock::now();
   Tokenizer t;
   std::shared_ptr<Json_entity> x = json(t);
-  print_json(x);
   auto end = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
       end - start); // Calculate duration
+  //print_json(x);
   std::cout << "\nElapsed time: " << duration.count() << " milliseconds"
             << std::endl; // Print duration in milliseconds
   return 0;

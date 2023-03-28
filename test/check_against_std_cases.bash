@@ -1,14 +1,14 @@
 totalc=1
 exe_dir=$(dirname ${BASH_SOURCE[0]})
 passed=0
-stdout_file="./$exe_dir/../results/std_cases_stdout"
-stderr_file="./$exe_dir/../results/std_cases_stderr"
-echo '' > passed
-echo '' > failed
+stdout="./$exe_dir/../results/std_cases_stdout"
+stderr="./$exe_dir/../results/std_cases_stderr"
+test_status="./$exe_dir/../results/test_status"
+truncate -s 0 $stdout_file $stdout_file passed failed
 for F in "./$exe_dir/../test_cases/"*;
 do 
   fn=$(basename $F)
-  cat $F | "./$exe_dir/../bin/json_cpp" >> $stdout_file 2>> $stderr_file; 
+  cat $F | "./$exe_dir/../bin/json_cpp" >> $stdout 2>> $stderr; 
   x=$?
   totalc=$(($totalc + 1))
   if [[ $fn == n* ]]; then
@@ -35,4 +35,8 @@ do
   fi
 done
 
-echo total = $totalc passed = $passed failed $(($totalc - $passed))
+status="total = $totalc passed = $passed failed $(($totalc - $passed))"
+
+echo $status
+
+echo $status >> $test_status
