@@ -3,8 +3,11 @@
 #include "tokenizer.h"
 #include <cassert>
 #include <chrono>
+#include <cstdio>
 #include <cstdlib>
+#include <ios>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -58,7 +61,7 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
       } else if (context.back() == Context::INSIDE_ARRAY) {
         std::shared_ptr<Json_arr> temp_arr_ptr =
             std::dynamic_pointer_cast<Json_arr>(mouth);
-       temp_arr_ptr->get_value().push_back(new_obj);
+        temp_arr_ptr->get_value().push_back(new_obj);
       }
       mouth_stack.push_back(new_obj);
       //------------------
@@ -297,14 +300,29 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
   return mouth;
 }
 
+std::string &read_string() {
+  static std::string buffer;
+  char c;
+  while (std::cin.get(c)) {
+    buffer += c;
+  }
+  if (std::cin.eof()) {
+    return buffer;
+  } else if (std::cin.fail()) {
+    std::cerr << "error reading from input\n";
+    std::exit(1);
+  }
+  return buffer;
+}
+
 int main() {
+  std::string &json_str = read_string();
   auto start = std::chrono::high_resolution_clock::now();
-  Tokenizer t;
+  Tokenizer t(json_str);
   std::shared_ptr<Json_entity> x = json(t);
   auto end = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
       end - start); // Calculate duration
-  //print_json(x);
   std::cout << "\nElapsed time: " << duration.count() << " milliseconds"
             << std::endl; // Print duration in milliseconds
   return 0;

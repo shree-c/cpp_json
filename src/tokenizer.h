@@ -3,6 +3,7 @@
 
 class Tokenizer {
 public:
+  Tokenizer(std::string &json_str) : buffer{json_str} {};
   Token gettoken();
   Token token_type;
   static void print_token_name(Token, std::ostream &);
@@ -10,24 +11,15 @@ public:
   std::string get_last_token() { return last_token; }
 
 private:
-  std::string buffer;
+  std::string &buffer;
   char getch() {
-    if (std::cin.eof()) {
+    if (buffer.length() == count) {
       return -1;
     }
-    if (buffer.length() == 0) {
-      char c;
-      std::cin.get(c);
-      return c;
-    }
-    char c{buffer.back()};
-    buffer.pop_back();
-    count++;
-    return c;
+    return buffer[count++];
   }
-  void ungetch(wchar_t c) {
+  void ungetch() {
     count--;
-    buffer.push_back(c);
   }
   bool check_rest_spell(const std::string &);
   static bool valid_no(const char &);
@@ -107,7 +99,7 @@ inline bool Tokenizer::valid_no(const char &c) {
 }
 
 inline Token Tokenizer::gettoken() {
-  int c = 0;
+  char c = '\0';
   while ((c = getch()) == ' ' || c == '\t' || c == '\n' || c == '\r')
     ;
   if (c == -1) {
@@ -167,7 +159,7 @@ inline Token Tokenizer::gettoken() {
       std::cerr << "gettoken: nothing after decimal point";
       std::exit(1);
     }
-    ungetch(c);
+    ungetch();
     return token_type = Token::NUMBER;
   }
   // string
@@ -182,7 +174,7 @@ inline Token Tokenizer::gettoken() {
       if (c == -1) {
         throw "unterminated string, reached EOF";
       }
-      // delete is not considered as control character but iscontrol returns true for it
+      // delete is not considered as control character but iscontrol returns
       if (std::iscntrl(c) && c != 127) {
         throw "control character inside string";
       }
