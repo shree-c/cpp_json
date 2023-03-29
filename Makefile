@@ -1,8 +1,8 @@
 run_tests:
 	bash test/check_against_std_cases.bash
 
-make_o3_bin:
-	g++ src/json_no_rec.cpp src/printer.cpp -O3 -o bin/json_cpp
+o3_bin:
+	g++ src/json_no_rec.cpp src/printer.cpp -O3 -o bin/o3
 
-make_debug_bin:
-	g++ src/json_no_rec.cpp src/printer.cpp -g -o bin/json_cpp
+debug_bin:
+	g++ src/json_no_rec.cpp src/printer.cpp -g -o bin/debug

@@ -5,15 +5,15 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
-#include <ios>
 #include <iostream>
 #include <limits>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
+#include <array>
 
-bool includes(std::vector<Token> &expected_token, Token t) {
+bool includes(std::array<Token, 10> &expected_token, Token t) {
   for (Token x : expected_token) {
     if (t == x)
       return true;
@@ -37,20 +37,26 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
   std::shared_ptr<Json_entity> start = nullptr;
   // initially both are same
   std::shared_ptr<Json_entity> mouth = start;
-  std::vector<Token> expected_token{Token::OPEN_BRA, Token::OPEN_ARR,
+  std::array<Token, 10> expected_token = {Token::OPEN_BRA, Token::OPEN_ARR,
                                     Token::BOOLEAN,  Token::NUMBER,
                                     Token::STRING,   Token::TNULL};
   std::vector<Context> context{Context::NOTHING};
+  context.reserve(20);
   std::vector<std::shared_ptr<Json_entity>> mouth_stack;
+  mouth_stack.reserve(20);
   // mouth_stack.push_back(start);
   Token last_token_type = Token::UNKNOWN;
   std::string last_key;
-  while ((c = t.gettoken()) != Token::END && includes(expected_token, c)) {
-    // should not break or continue in following switch
-    // std::cout << t.get_last_token() << '\n';
+  while ((c = t.gettoken()) != Token::END) {
+    if (!includes(expected_token, c)) {
+      print_json(mouth);
+      print_token_type(c);
+      std::cout << t.get_last_token() << "xx\n";
+      throw "json: unexpected token";
+    }
     switch (c) {
     case Token::OPEN_BRA: {
-      expected_token.clear();
+      expected_token = {};
       expected_token = {Token::STRING, Token::CLOSE_BRA};
       //------------------
       std::shared_ptr<Json_obj> new_obj = std::make_shared<Json_obj>();
@@ -72,7 +78,7 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
     }
 
     case Token::STRING: {
-      expected_token.clear();
+      expected_token = {};
       if (context.back() == Context::INSIDE_CURLY) {
         if (last_token_type == Token::COLON) {
           // push the key value into the container
@@ -110,13 +116,13 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
       break;
     }
     case Token::COLON: {
-      expected_token.clear();
+      expected_token = {};
       expected_token = {Token::OPEN_BRA, Token::OPEN_ARR, Token::BOOLEAN,
                         Token::NUMBER,   Token::STRING,   Token::TNULL};
       break;
     }
     case Token::OPEN_ARR: {
-      expected_token.clear();
+      expected_token = {};
       expected_token = {Token::OPEN_BRA, Token::OPEN_ARR, Token::BOOLEAN,
                         Token::NUMBER,   Token::STRING,   Token::TNULL,
                         Token::CLOSE_ARR};
@@ -139,7 +145,7 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
       break;
     }
     case Token::CLOSE_ARR: {
-      expected_token.clear();
+      expected_token = {};
       if (context.back() != Context::INSIDE_ARRAY) {
         std::cerr << "Not inside array" << std::endl;
         std::exit(1);
@@ -186,7 +192,7 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
       break;
     }
     case Token::COMMA: {
-      expected_token.clear();
+      expected_token = {};
       expected_token = {Token::OPEN_BRA, Token::OPEN_ARR, Token::BOOLEAN,
                         Token::NUMBER,   Token::STRING,   Token::TNULL};
       break;
@@ -203,7 +209,7 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
       } else if (context.back() == Context::INSIDE_ARRAY) {
         expected_token = {Token::COMMA, Token::CLOSE_ARR};
       } else {
-        expected_token = {};
+        expected_token = {Token::END};
       }
       //--------
       switch (c) {
@@ -262,40 +268,34 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
         }
         break;
       }
+      //--------
       default:
         break;
       }
-      //--------
       break;
     }
-    default: {
-      std::cerr << "Unhandled token" << std::endl;
-      Tokenizer::print_token_name(c, std::cerr);
-      std::exit(1);
+    // case sub handling end
+    case Token::UNKNOWN: {
+      throw "json: unknown token";
       break;
     }
+    default:
+      break;
     }
     last_token_type = c;
   }
-  bool exit_failure = false;
-  if (c != Token::END) {
-    if (last_token_type == Token::UNKNOWN) {
-      exit_failure = true;
+  if (context.back() != Context::NOTHING) {
+    switch (context.back()) {
+    case Context::INSIDE_ARRAY:
+      throw "unclosed array";
+      break;
+    case Context::INSIDE_CURLY:
+      throw "unclosed object";
+      break;
+    default:
+      throw "context is not cleared\n";
+      break;
     }
-    std::cerr << "All characters are not consumed : count " << t.count
-              << std::endl;
-  }
-  if (expected_token.size() > 0) {
-    std::cerr << "Expected token list is not empty: count " << t.count
-              << std::endl;
-    for (Token x : expected_token) {
-      Tokenizer::print_token_name(x, std::cerr);
-      std::cerr << std::endl;
-    }
-    exit_failure = true;
-  }
-  if (exit_failure) {
-    std::exit(2);
   }
   return mouth;
 }
@@ -315,15 +315,23 @@ std::string &read_string() {
   return buffer;
 }
 
-int main() {
+int main(int argc, char **argv) {
   std::string &json_str = read_string();
-  auto start = std::chrono::high_resolution_clock::now();
   Tokenizer t(json_str);
-  std::shared_ptr<Json_entity> x = json(t);
-  auto end = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-      end - start); // Calculate duration
-  std::cout << "\nElapsed time: " << duration.count() << " milliseconds"
-            << std::endl; // Print duration in milliseconds
+  try {
+    auto start = std::chrono::high_resolution_clock::now();
+    std::shared_ptr<Json_entity> x = json(t);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        end - start); // Calculate duration
+    if (argc == 2) {
+      print_json(x);
+    }
+    std::cout << "\nElapsed time: " << duration.count() << " milliseconds"
+              << std::endl; // Print duration in milliseconds
+  } catch (const char *err) {
+    std::cerr << err << '\n';
+    return 1;
+  }
   return 0;
 }

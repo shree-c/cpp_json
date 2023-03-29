@@ -84,7 +84,7 @@ void print_json(std::shared_ptr<Json_entity> x) {
     // std::cout << "printing string\n";
     std::shared_ptr<Json_string> temp_str_obj =
         std::dynamic_pointer_cast<Json_string>(x);
-    print_colorful(temp_str_obj->get_value(), Color::GREEN, 0);
+    print_colorful("\"" + temp_str_obj->get_value() + "\"", Color::GREEN, 0);
     break;
   }
   case Data_type::NUMBER: {

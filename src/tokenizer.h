@@ -8,19 +8,18 @@ public:
   Token token_type;
   static void print_token_name(Token, std::ostream &);
   int count{0};
-  std::string get_last_token() { return last_token; }
+  std::string &get_last_token() { return last_token; }
 
 private:
   std::string &buffer;
-  char getch() {
+  const char &getch() {
     if (buffer.length() == count) {
-      return -1;
+      static char c = EOF;
+      return c;
     }
     return buffer[count++];
   }
-  void ungetch() {
-    count--;
-  }
+  void ungetch() { count--; }
   bool check_rest_spell(const std::string &);
   static bool valid_no(const char &);
   std::string last_token;
@@ -99,10 +98,10 @@ inline bool Tokenizer::valid_no(const char &c) {
 }
 
 inline Token Tokenizer::gettoken() {
-  char c = '\0';
+  int c = '\0';
   while ((c = getch()) == ' ' || c == '\t' || c == '\n' || c == '\r')
     ;
-  if (c == -1) {
+  if (c == -1 || c == 0) {
     return token_type = Token::END;
   }
   if (c == ',') {
@@ -137,29 +136,84 @@ inline Token Tokenizer::gettoken() {
     }
   }
   // only integers are handled
-  if (valid_no(c)) {
-    int period_count = 0;
-    if (c == '.')
-      period_count++;
+  if (std::isdigit(c) || c == '-') {
     last_token = "";
-    last_token.push_back(c);
-    char prev_digit = c;
-    while (valid_no(c = getch())) {
-      if (c == '.') {
-        if (period_count != 0) {
-          std::cerr << "gettoken: invalid number, more than one decimal points";
-          std::exit(1);
-        }
-        period_count++;
-      }
-      last_token.push_back(c);
-      prev_digit = c;
-    }
-    if (prev_digit == '.') {
-      std::cerr << "gettoken: nothing after decimal point";
-      std::exit(1);
-    }
+    bool start = true;
+    bool loop = true;
+    bool no_more_digits = false;
+    bool at_least_one_digit = false;
+    bool after_exponent = false;
+    bool no_dot = false;
     ungetch();
+    while (loop) {
+      c = getch();
+      if (no_dot) {
+        if (c == '.') {
+          throw "number: more than one decimal point";
+        }
+      }
+      if (no_more_digits) {
+        if (std::isdigit(c)) {
+          throw "number: unexpected digit";
+        }
+        no_more_digits = false;
+      }
+      if (at_least_one_digit) {
+        if (std::isdigit(c)) {
+          last_token.push_back(c);
+          at_least_one_digit = false;
+          continue;
+        }
+        throw "number: digit expected";
+      }
+      if (after_exponent) {
+        if (c == '+' || c == '-') {
+          at_least_one_digit = true;
+          after_exponent = false;
+          last_token.push_back(c);
+          continue;
+        }
+        if (std::isdigit(c)) {
+          last_token.push_back(c);
+          after_exponent = false;
+          continue;
+        }
+        throw "number: unexpected token after exponent";
+      }
+      if (start) {
+        if (c == '-' || c == '+') {
+          last_token.push_back(c);
+          continue;
+        }
+        if (std::isdigit(c)) {
+          if (c == '0') {
+            no_more_digits = true;
+          }
+          last_token.push_back(c);
+          start = false;
+          continue;
+        }
+        throw "number: unexpected token at start";
+      }
+      if (c == '.') {
+        no_more_digits = false;
+        at_least_one_digit = true;
+        no_dot = true;
+        last_token.push_back(c);
+        continue;
+      }
+      if (c == 'E' || c == 'e') {
+        after_exponent = true;
+        last_token.push_back(c);
+        continue;
+      }
+      if (std::isdigit(c) && !no_more_digits) {
+        last_token.push_back(c);
+        continue;
+      }
+      loop = false;
+      ungetch();
+    }
     return token_type = Token::NUMBER;
   }
   // string
@@ -239,6 +293,5 @@ inline Token Tokenizer::gettoken() {
   if (c == '{') {
     return token_type = Token::OPEN_BRA;
   }
-  // fprintf(stderr, "gettoken: unknown token_type\n");
   return token_type = Token::UNKNOWN;
 }
