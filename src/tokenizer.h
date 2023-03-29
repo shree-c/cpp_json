@@ -12,14 +12,14 @@ public:
 
 private:
   std::string &buffer;
-  const char &getch() {
+  inline const char getch() {
     if (buffer.length() == count) {
       static char c = EOF;
       return c;
     }
     return buffer[count++];
   }
-  void ungetch() { count--; }
+  inline void ungetch() { count--; }
   bool check_rest_spell(const std::string &);
   static bool valid_no(const char &);
   std::string last_token;

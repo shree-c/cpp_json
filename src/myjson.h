@@ -1,6 +1,6 @@
 #ifndef MYJSON_H
 #define MYJSON_H
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -37,10 +37,10 @@ public:
 class Json_obj : public Json_entity {
 public:
   Data_type get_type() { return Data_type::OBJECT; };
-  std::map<std::string, std::shared_ptr<Json_entity>> &get_value() { return v; }
+  std::unordered_map<std::string, std::shared_ptr<Json_entity>> &get_value() { return v; }
 
 private:
-  std::map<std::string, std::shared_ptr<Json_entity>> v;
+  std::unordered_map<std::string, std::shared_ptr<Json_entity>> v;
 };
 
 class Json_arr : public Json_entity {

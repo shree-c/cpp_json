@@ -54,7 +54,7 @@ void print_array(std::shared_ptr<Json_entity> x) {
 void print_object(std::shared_ptr<Json_entity> x) {
   std::shared_ptr<Json_obj> temp_str_obj =
       std::dynamic_pointer_cast<Json_obj>(x);
-  std::map<std::string, std::shared_ptr<Json_entity>> map =
+  std::unordered_map<std::string, std::shared_ptr<Json_entity>> map =
       temp_str_obj->get_value();
   print_colorful("{\n", Color::MEGENTA, 0);
   spaces_count += 2;
