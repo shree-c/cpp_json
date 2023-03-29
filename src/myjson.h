@@ -5,7 +5,9 @@
 #include <string>
 #include <vector>
 
+// gurad to check against zero
 enum class Token {
+  GUARD,
   BOOLEAN,   // 0
   NUMBER,    // 1
   STRING,    // 2

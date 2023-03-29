@@ -1,4 +1,4 @@
-totalc=1
+totalc=0
 exe_dir=$(dirname ${BASH_SOURCE[0]})
 passed=0
 stdout="./$exe_dir/../results/std_cases_stdout"
@@ -8,7 +8,7 @@ truncate -s 0 $stdout_file $stdout_file passed failed
 for F in "./$exe_dir/../test_cases/"*;
 do 
   fn=$(basename $F)
-  cat $F | "./$exe_dir/../bin/json_cpp" >> $stdout 2>> $stderr; 
+  cat $F | "./$exe_dir/../bin/o3" >> $stdout 2>> $stderr; 
   x=$?
   totalc=$(($totalc + 1))
   if [[ $fn == n* ]]; then

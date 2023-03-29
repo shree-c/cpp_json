@@ -15,6 +15,10 @@
 
 bool includes(std::array<Token, 10> &expected_token, Token t) {
   for (Token x : expected_token) {
+    // to check against zero
+    if (x == Token::GUARD) {
+      return false;
+    }
     if (t == x)
       return true;
   }
@@ -34,9 +38,8 @@ bool strToBool(const std::string &str) {
 std::shared_ptr<Json_entity> json(Tokenizer t) {
   Token c;
   // eats latest data
-  std::shared_ptr<Json_entity> start = nullptr;
   // initially both are same
-  std::shared_ptr<Json_entity> mouth = start;
+  std::shared_ptr<Json_entity> mouth = nullptr;
   std::array<Token, 10> expected_token = {Token::OPEN_BRA, Token::OPEN_ARR,
                                     Token::BOOLEAN,  Token::NUMBER,
                                     Token::STRING,   Token::TNULL};
@@ -44,14 +47,11 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
   context.reserve(20);
   std::vector<std::shared_ptr<Json_entity>> mouth_stack;
   mouth_stack.reserve(20);
-  // mouth_stack.push_back(start);
   Token last_token_type = Token::UNKNOWN;
   std::string last_key;
   while ((c = t.gettoken()) != Token::END) {
     if (!includes(expected_token, c)) {
-      print_json(mouth);
-      print_token_type(c);
-      std::cout << t.get_last_token() << "xx\n";
+      std::cout << t.get_last_token() << "\n";
       throw "json: unexpected token";
     }
     switch (c) {
@@ -116,13 +116,11 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
       break;
     }
     case Token::COLON: {
-      expected_token = {};
       expected_token = {Token::OPEN_BRA, Token::OPEN_ARR, Token::BOOLEAN,
                         Token::NUMBER,   Token::STRING,   Token::TNULL};
       break;
     }
     case Token::OPEN_ARR: {
-      expected_token = {};
       expected_token = {Token::OPEN_BRA, Token::OPEN_ARR, Token::BOOLEAN,
                         Token::NUMBER,   Token::STRING,   Token::TNULL,
                         Token::CLOSE_ARR};
@@ -192,7 +190,6 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
       break;
     }
     case Token::COMMA: {
-      expected_token = {};
       expected_token = {Token::OPEN_BRA, Token::OPEN_ARR, Token::BOOLEAN,
                         Token::NUMBER,   Token::STRING,   Token::TNULL};
       break;
@@ -296,6 +293,9 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
       throw "context is not cleared\n";
       break;
     }
+  }
+  if (mouth == nullptr) {
+    throw "unexpected end of input";
   }
   return mouth;
 }
