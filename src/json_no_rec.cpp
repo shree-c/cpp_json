@@ -13,19 +13,19 @@
 #include <vector>
 #include <array>
 
-bool includes(std::array<Token, 10> &expected_token, Token t) {
-  for (Token x : expected_token) {
+inline bool includes(std::array<Token, 10> &expected_token, Token t) {
+  for (int i = 0; i < 10; i++) {
     // to check against zero
-    if (x == Token::GUARD) {
+    if (expected_token[i] == Token::GUARD) {
       return false;
     }
-    if (t == x)
+    if (expected_token[i] == t)
       return true;
   }
   return false;
 }
 
-bool strToBool(const std::string &str) {
+inline bool strToBool(const std::string &str) {
   if (str == "true" || str == "1") {
     return true;
   } else if (str == "false" || str == "0") {
@@ -38,7 +38,6 @@ bool strToBool(const std::string &str) {
 std::shared_ptr<Json_entity> json(Tokenizer t) {
   Token c;
   // eats latest data
-  // initially both are same
   std::shared_ptr<Json_entity> mouth = nullptr;
   std::array<Token, 10> expected_token = {Token::OPEN_BRA, Token::OPEN_ARR,
                                     Token::BOOLEAN,  Token::NUMBER,
