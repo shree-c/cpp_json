@@ -107,8 +107,7 @@ inline Token Tokenizer::gettoken() {
       if (c == -1) {
         throw "unterminated string, reached EOF";
       }
-      // delete is not considered as control character but iscontrol returns
-      if (std::iscntrl(c) && c != 127) {
+      if (c >= 0x00 && c <= 0x0F) {
         throw "control character inside string";
       }
       if (backslash_status) {
