@@ -13,7 +13,6 @@ public:
 private:
   std::string &buffer;
   inline const char getch() {
-    std::cout << count << '\n';
     if (buffer.length() == count) {
       count++;
       return EOF;
