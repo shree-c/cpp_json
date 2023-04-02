@@ -34,11 +34,17 @@ inline bool strToBool(const std::string &str) {
     throw std::invalid_argument("Invalid boolean string: " + str);
   }
 }
+typedef std::shared_ptr<Json_entity> JsonEntity;
+typedef std::shared_ptr<Json_obj> JsonObject;
+typedef std::shared_ptr<Json_bool> JsonBoolean;
+typedef std::shared_ptr<Json_number> JsonNumber;
+typedef std::shared_ptr<Json_null> JsonNull;
+typedef std::shared_ptr<Json_string> JsonString;
 
 std::shared_ptr<Json_entity> json(Tokenizer t) {
   Token c;
   // eats latest data
-  std::shared_ptr<Json_entity> mouth = nullptr;
+  JsonEntity mouth = nullptr;
   std::array<Token, 10> expected_token = {Token::OPEN_BRA, Token::OPEN_ARR,
                                     Token::BOOLEAN,  Token::NUMBER,
                                     Token::STRING,   Token::TNULL};
@@ -55,7 +61,6 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
     }
     switch (c) {
     case Token::OPEN_BRA: {
-      expected_token = {};
       expected_token = {Token::STRING, Token::CLOSE_BRA};
       //------------------
       std::shared_ptr<Json_obj> new_obj = std::make_shared<Json_obj>();
@@ -77,7 +82,6 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
     }
 
     case Token::STRING: {
-      expected_token = {};
       if (context.back() == Context::INSIDE_CURLY) {
         if (last_token_type == Token::COLON) {
           // push the key value into the container
@@ -142,7 +146,6 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
       break;
     }
     case Token::CLOSE_ARR: {
-      expected_token = {};
       if (context.back() != Context::INSIDE_ARRAY) {
         std::cerr << "Not inside array" << std::endl;
         std::exit(1);
