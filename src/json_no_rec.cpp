@@ -1,6 +1,7 @@
 #include "myjson.h"
 #include "print.h"
 #include "tokenizer.h"
+#include <array>
 #include <cassert>
 #include <chrono>
 #include <cstdio>
@@ -11,7 +12,6 @@
 #include <ostream>
 #include <string>
 #include <vector>
-#include <array>
 
 inline bool includes(std::array<Token, 10> &expected_token, Token t) {
   for (int i = 0; i < 10; i++) {
@@ -35,21 +35,13 @@ inline bool strToBool(const std::string &str) {
   }
 }
 
-typedef std::shared_ptr<Json_entity> Json_entity_shared_ptr;
-typedef std::shared_ptr<Json_obj> Json_obj_shared_ptr;
-typedef std::shared_ptr<Json_bool> Json_bool_shared_ptr;
-typedef std::shared_ptr<Json_number> Json_number_shared_ptr;
-typedef std::shared_ptr<Json_null> Json_null_shared_ptr;
-typedef std::shared_ptr<Json_string> Json_string_shared_ptr;
-typedef std::shared_ptr<Json_arr> Json_arr_shared_ptr;
-
 std::shared_ptr<Json_entity> json(Tokenizer t) {
   Token c;
   // eats latest data
   Json_entity_shared_ptr mouth = nullptr;
   std::array<Token, 10> expected_token = {Token::OPEN_BRA, Token::OPEN_ARR,
-                                    Token::BOOLEAN,  Token::NUMBER,
-                                    Token::STRING,   Token::TNULL};
+                                          Token::BOOLEAN,  Token::NUMBER,
+                                          Token::STRING,   Token::TNULL};
   std::vector<Context> context{Context::NOTHING};
   context.reserve(20);
   std::vector<Json_entity_shared_ptr> mouth_stack;
@@ -69,11 +61,11 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
       if (context.back() == Context::INSIDE_CURLY) {
         Json_obj_shared_ptr temp_obj_ptr =
             std::dynamic_pointer_cast<Json_obj>(mouth);
-        temp_obj_ptr->get_value().insert({last_key, new_obj});
+        temp_obj_ptr->insert(last_key, new_obj);
       } else if (context.back() == Context::INSIDE_ARRAY) {
         Json_arr_shared_ptr temp_arr_ptr =
             std::dynamic_pointer_cast<Json_arr>(mouth);
-        temp_arr_ptr->get_value().push_back(new_obj);
+        temp_arr_ptr->insert(new_obj);
       }
       mouth_stack.push_back(new_obj);
       //------------------
@@ -86,13 +78,10 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
     case Token::STRING: {
       if (context.back() == Context::INSIDE_CURLY) {
         if (last_token_type == Token::COLON) {
-          // push the key value into the container
-          // getting in touch with the container of the object
-          // casting mouth to object
           Json_obj_shared_ptr temp_obj_ptr =
               std::dynamic_pointer_cast<Json_obj>(mouth);
-          temp_obj_ptr->get_value().insert(
-              {last_key, std::make_shared<Json_string>(t.get_last_token())});
+          temp_obj_ptr->insert(
+              last_key, std::make_shared<Json_string>(t.get_last_token()));
           expected_token = {Token::COMMA, Token::CLOSE_BRA};
           break;
         }
@@ -106,7 +95,7 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
         expected_token = {Token::COMMA, Token::CLOSE_ARR};
         Json_arr_shared_ptr temp_arr_ptr =
             std::dynamic_pointer_cast<Json_arr>(mouth);
-        temp_arr_ptr->get_value().push_back(
+        temp_arr_ptr->insert(
             std::make_shared<Json_string>(t.get_last_token()));
         break;
       }
@@ -134,11 +123,11 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
         assert(last_token_type == Token::COLON);
         Json_obj_shared_ptr temp_obj_ptr =
             std::dynamic_pointer_cast<Json_obj>(mouth);
-        temp_obj_ptr->get_value().insert({last_key, new_arr});
+        temp_obj_ptr->insert(last_key, new_arr);
       } else if (context.back() == Context::INSIDE_ARRAY) {
         Json_arr_shared_ptr temp_arr_ptr =
             std::dynamic_pointer_cast<Json_arr>(mouth);
-        temp_arr_ptr->get_value().push_back(new_arr);
+        temp_arr_ptr->insert(new_arr);
       }
       mouth_stack.push_back(new_arr);
       // upcast; updating mouth
@@ -218,14 +207,14 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
         if (context.back() == Context::INSIDE_ARRAY) {
           Json_arr_shared_ptr temp_arr =
               std::dynamic_pointer_cast<Json_arr>(mouth);
-          temp_arr->get_value().push_back(
+          temp_arr->insert(
               std::make_shared<Json_bool>(strToBool(t.get_last_token())));
         } else if (context.back() == Context::INSIDE_CURLY) {
           Json_obj_shared_ptr temp_obj =
               std::dynamic_pointer_cast<Json_obj>(mouth);
-          temp_obj->get_value().insert(
-              {last_key,
-               std::make_shared<Json_bool>(strToBool(t.get_last_token()))});
+          temp_obj->insert(
+              last_key,
+               std::make_shared<Json_bool>(strToBool(t.get_last_token())));
         } else {
           assert(context.back() == Context::NOTHING);
           assert(mouth == nullptr);
@@ -237,14 +226,14 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
         if (context.back() == Context::INSIDE_ARRAY) {
           Json_arr_shared_ptr temp_arr =
               std::dynamic_pointer_cast<Json_arr>(mouth);
-          temp_arr->get_value().push_back(
+          temp_arr->insert(
               std::make_shared<Json_number>(std::stod(t.get_last_token())));
         } else if (context.back() == Context::INSIDE_CURLY) {
           Json_obj_shared_ptr temp_obj =
               std::dynamic_pointer_cast<Json_obj>(mouth);
-          temp_obj->get_value().insert(
-              {last_key,
-               std::make_shared<Json_number>(std::stod(t.get_last_token()))});
+          temp_obj->insert(
+              last_key,
+               std::make_shared<Json_number>(std::stod(t.get_last_token())));
         } else {
           assert(context.back() == Context::NOTHING);
           assert(mouth == nullptr);
@@ -256,12 +245,12 @@ std::shared_ptr<Json_entity> json(Tokenizer t) {
         if (context.back() == Context::INSIDE_ARRAY) {
           Json_arr_shared_ptr temp_arr =
               std::dynamic_pointer_cast<Json_arr>(mouth);
-          temp_arr->get_value().push_back(std::make_shared<Json_null>());
+          temp_arr->insert(std::make_shared<Json_null>());
         } else if (context.back() == Context::INSIDE_CURLY) {
           Json_obj_shared_ptr temp_obj =
               std::dynamic_pointer_cast<Json_obj>(mouth);
-          temp_obj->get_value().insert(
-              {last_key, std::make_shared<Json_null>()});
+          temp_obj->insert(
+              last_key, std::make_shared<Json_null>());
         } else {
           assert(context.back() == Context::NOTHING);
           assert(mouth == nullptr);
