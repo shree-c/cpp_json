@@ -1,16 +1,19 @@
 #include "types.h"
 namespace SJSON {
 
-void print_spaces(int count);
+enum class Color { RED, GREEN, YELLOW, BLUE, MEGENTA };
 
-enum class Color { RED, BLUE, GREEN, YELLOW, MEGENTA };
+class Printer {
+public:
+  static void print_json(std::shared_ptr<Json_entity>);
+  static void print_token_type(Token);
 
-void print_json(std::shared_ptr<Json_entity>);
-
-void print_array(std::shared_ptr<Json_entity> x);
-
-void print_object(std::shared_ptr<Json_entity> x);
-
-void print_token_type(Token t);
+private:
+  static int spaces_count;
+  static void print_array(Json_entity_shared_ptr);
+  static void print_object(std::shared_ptr<Json_entity>);
+  static void print_spaces(int);
+  static void print_colorful(std::string, Color, int);
+};
 
 } // namespace SJSON

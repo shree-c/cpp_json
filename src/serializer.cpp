@@ -1,49 +1,23 @@
+#include "serializer.h"
+#include "exception.h"
 #include "print.h"
 #include "tokenizer.h"
 #include "types.h"
-#include <array>
-#include <cassert>
-#include <chrono>
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <limits>
 #include <memory>
-#include <ostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
-
 namespace SJSON {
 
-class Serializer {
-  // calls tokenizer
-public:
-  Serializer(std::string &json_string) : t(Tokenizer(json_string)){};
-  Json_entity_shared_ptr serialize();
-
-private:
-  // tokenizer object
-  Tokenizer t;
-  // state
-  std::vector<Json_entity_shared_ptr> mouth_stack;
-  // points to top most container on mouth stack
-  Json_entity_shared_ptr mouth = nullptr;
-  std::vector<Context> context{Context::NOTHING};
-  Token last_token_type = Token::UNKNOWN;
-  std::string last_key;
-  std::array<Token, 10> expected_token = {Token::OPEN_BRA, Token::OPEN_ARR,
-                                          Token::BOOLEAN,  Token::NUMBER,
-                                          Token::STRING,   Token::TNULL};
-
-  // helper functions
-  inline bool includes(std::array<Token, 10> &, Token);
-  inline bool strToBool(const std::string &);
-  void handle_premitive(Token);
-  void update_mouth(Json_entity_shared_ptr);
-  // overloaded push
-  void push(std::string, Json_entity_shared_ptr);
-  void push(Json_entity_shared_ptr);
-};
+inline double try_convert_to_double(std::string string_to_be_converted) {
+  try {
+    return std::stod(string_to_be_converted);
+  } catch (std::out_of_range &exception) {
+    throw SJSONException("stod: conversion: number too big");
+  } catch (std::invalid_argument &exception) {
+    throw SJSONException("stod: conversion: trying to convert invalid string");
+  }
+}
 
 void Serializer::push(std::string key, Json_entity_shared_ptr value) {
   Json_obj_shared_ptr mouth_object = std::dynamic_pointer_cast<Json_obj>(mouth);
@@ -73,13 +47,13 @@ inline bool Serializer::includes(std::array<Token, 10> &expected_token,
   return false;
 }
 
-inline bool Serializer::strToBool(const std::string &str) {
+inline bool Serializer::strToBool(const std::string &str) noexcept(false) {
   if (str == "true" || str == "1") {
     return true;
   } else if (str == "false" || str == "0") {
     return false;
   } else {
-    throw std::invalid_argument("Invalid boolean string: " + str);
+    throw SJSONException("Invalid boolean string: " + str);
   }
 }
 
@@ -98,12 +72,14 @@ void Serializer::handle_premitive(Token c) {
   }
   case Token::NUMBER: {
     if (context.back() == Context::INSIDE_ARRAY) {
-      push(std::make_shared<Json_number>(std::stod(t.get_last_token())));
+      push(std::make_shared<Json_number>(
+          try_convert_to_double(t.get_last_token())));
     } else if (context.back() == Context::INSIDE_CURLY) {
-      push(last_key,
-           std::make_shared<Json_number>(std::stod(t.get_last_token())));
+      push(last_key, std::make_shared<Json_number>(
+                         try_convert_to_double(t.get_last_token())));
     } else {
-      mouth = std::make_shared<Json_number>(std::stod(t.get_last_token()));
+      mouth = std::make_shared<Json_number>(
+          try_convert_to_double(t.get_last_token()));
     }
     break;
   }
@@ -128,8 +104,8 @@ std::shared_ptr<Json_entity> Serializer::serialize() {
   mouth_stack.reserve(20);
   while ((c = t.gettoken()) != Token::END) {
     if (!includes(expected_token, c)) {
-      print_token_type(c);
-      throw "json: unexpected token";
+      Printer::print_token_type(c);
+      throw SJSONException("json: unexpected token");
     }
     switch (c) {
     case Token::OPEN_BRA: {
@@ -188,10 +164,6 @@ std::shared_ptr<Json_entity> Serializer::serialize() {
       break;
     }
     case Token::CLOSE_ARR: {
-      if (context.back() != Context::INSIDE_ARRAY) {
-        std::cerr << "Not inside array" << std::endl;
-        std::exit(1);
-      }
       context.pop_back();
       //----------------
       if (mouth_stack.size() != 1) {
@@ -211,10 +183,6 @@ std::shared_ptr<Json_entity> Serializer::serialize() {
       break;
     }
     case Token::CLOSE_BRA: {
-      if (context.back() != Context::INSIDE_CURLY) {
-        std::cerr << "Unexpected closing curly" << std::endl;
-        std::exit(1);
-      }
       context.pop_back();
       //--------------
       if (mouth_stack.size() != 1) {
@@ -243,7 +211,7 @@ std::shared_ptr<Json_entity> Serializer::serialize() {
     case Token::NUMBER: {
       if (last_token_type == Token::COLON) {
         if (context.back() != Context::INSIDE_CURLY) {
-          throw "Mismatched context";
+          throw SJSONException("Mismatched context");
         }
         expected_token = {Token::COMMA, Token::CLOSE_BRA};
       } else if (context.back() == Context::INSIDE_ARRAY) {
@@ -257,7 +225,7 @@ std::shared_ptr<Json_entity> Serializer::serialize() {
     }
     // case sub handling end
     case Token::UNKNOWN: {
-      throw "json: unknown token";
+      throw SJSONException("json: unknown token");
       break;
     }
     default:
@@ -268,18 +236,18 @@ std::shared_ptr<Json_entity> Serializer::serialize() {
   if (context.back() != Context::NOTHING) {
     switch (context.back()) {
     case Context::INSIDE_ARRAY:
-      throw "unclosed array";
+      throw SJSONException("unclosed array");
       break;
     case Context::INSIDE_CURLY:
-      throw "unclosed object";
+      throw SJSONException("unclosed object");
       break;
     default:
-      throw "context is not cleared\n";
+      throw SJSONException("context is not cleared");
       break;
     }
   }
   if (mouth == nullptr) {
-    throw "unexpected end of input";
+    throw SJSONException("unexpected end of input");
   }
   return mouth;
 }

@@ -1,4 +1,7 @@
+#ifndef TOKENIZER_H
+#define TOKENIZER_H
 #include "types.h"
+#include "exception.h"
 #include <iostream>
 namespace SJSON {
 
@@ -106,10 +109,10 @@ inline Token Tokenizer::gettoken() {
     while (unterminated) {
       c = getch();
       if (c == -1) {
-        throw "unterminated string, reached EOF";
+        throw SJSONException("unterminated string, reached EOF");
       }
       if (c >= 0x00 && c <= 0x0F) {
-        throw "control character inside string";
+        throw SJSONException("control character inside string");
       }
       if (backslash_status) {
         if (hex_status) {
@@ -124,7 +127,7 @@ inline Token Tokenizer::gettoken() {
             last_token.push_back(c);
             continue;
           }
-          throw "illegal hex character";
+          throw SJSONException("illegal hex character");
         } else {
           if (c == '"' || c == '\\' || c == 'b' || c == 'f' || c == 'n' ||
               c == 'r' || c == 't' || c == '/') {
@@ -138,7 +141,7 @@ inline Token Tokenizer::gettoken() {
             continue;
           }
         }
-        throw "unknown character after backslash";
+        throw SJSONException("unknown character after backslash");
       } else {
         if (c == '"') {
           unterminated = false;
@@ -152,7 +155,7 @@ inline Token Tokenizer::gettoken() {
         last_token.push_back(c);
         continue;
       }
-      throw "unknown character, missed all checks\n";
+      throw SJSONException("unknown character, missed all checks");
     }
     return token_type = Token::STRING;
   }
@@ -168,8 +171,7 @@ inline Token Tokenizer::gettoken() {
       last_token = "true";
       return token_type = Token::BOOLEAN;
     } else {
-      std::cerr << "gettoken: error expected valid value: [t]rue" << std::endl;
-      std::exit(1);
+      throw SJSONException("error expected valid value: [t]rue");
     }
   }
   if (c == 'f') {
@@ -177,8 +179,7 @@ inline Token Tokenizer::gettoken() {
       last_token = "false";
       return token_type = Token::BOOLEAN;
     } else {
-      std::cerr << "gettoken: error expected valid value: [f]alse" << std::endl;
-      std::exit(1);
+      throw SJSONException("error expected valid value: [f]alse");
     }
   }
   if (c == 'n') {
@@ -186,8 +187,7 @@ inline Token Tokenizer::gettoken() {
       last_token = "null";
       return token_type = Token::TNULL;
     } else {
-      std::cerr << "gettoken: error expected valid value: [n]ull" << std::endl;
-      std::exit(1);
+      throw SJSONException("error expected valid value: [n]ull");
     }
   }
   // number
@@ -204,12 +204,12 @@ inline Token Tokenizer::gettoken() {
       c = getch();
       if (no_dot) {
         if (c == '.') {
-          throw "number: more than one decimal point";
+          throw SJSONException("number: more than one decimal point");
         }
       }
       if (no_more_digits) {
         if (std::isdigit(c)) {
-          throw "number: unexpected digit";
+          throw SJSONException("number: unexpected digit");
         }
         no_more_digits = false;
       }
@@ -219,7 +219,7 @@ inline Token Tokenizer::gettoken() {
           at_least_one_digit = false;
           continue;
         }
-        throw "number: digit expected";
+        throw SJSONException("number: digit expected");
       }
       if (after_exponent) {
         if (c == '+' || c == '-') {
@@ -233,7 +233,7 @@ inline Token Tokenizer::gettoken() {
           after_exponent = false;
           continue;
         }
-        throw "number: unexpected token after exponent";
+        throw SJSONException("number: unexpected token after exponent");
       }
       if (start) {
         if (c == '-' || c == '+') {
@@ -248,7 +248,7 @@ inline Token Tokenizer::gettoken() {
           start = false;
           continue;
         }
-        throw "number: unexpected token at start";
+        throw SJSONException("number: unexpected token at start");
       }
       if (c == '.') {
         no_more_digits = false;
@@ -292,3 +292,4 @@ inline Token Tokenizer::gettoken() {
   return token_type = Token::UNKNOWN;
 }
 } // namespace SJSON
+#endif
