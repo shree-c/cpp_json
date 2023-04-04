@@ -1,5 +1,6 @@
-#include "myjson.h"
+#include "types.h"
 #include <iostream>
+namespace SJSON {
 
 class Tokenizer {
 public:
@@ -290,3 +291,4 @@ inline Token Tokenizer::gettoken() {
   }
   return token_type = Token::UNKNOWN;
 }
+} // namespace SJSON

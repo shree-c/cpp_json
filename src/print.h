@@ -1,4 +1,5 @@
-#include "myjson.h"
+#include "types.h"
+namespace SJSON {
 
 void print_spaces(int count);
 
@@ -11,3 +12,5 @@ void print_array(std::shared_ptr<Json_entity> x);
 void print_object(std::shared_ptr<Json_entity> x);
 
 void print_token_type(Token t);
+
+} // namespace SJSON

@@ -1,6 +1,6 @@
-#include "myjson.h"
 #include "print.h"
 #include "tokenizer.h"
+#include "types.h"
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -13,6 +13,8 @@
 #include <string>
 #include <vector>
 
+namespace SJSON {
+
 class Serializer {
   // calls tokenizer
 public:
@@ -24,6 +26,7 @@ private:
   Tokenizer t;
   // state
   std::vector<Json_entity_shared_ptr> mouth_stack;
+  // points to top most container on mouth stack
   Json_entity_shared_ptr mouth = nullptr;
   std::vector<Context> context{Context::NOTHING};
   Token last_token_type = Token::UNKNOWN;
@@ -121,9 +124,6 @@ void Serializer::handle_premitive(Token c) {
 
 std::shared_ptr<Json_entity> Serializer::serialize() {
   Token c;
-  // eats latest data
-  // remaining slots are filled with zero
-  // Token::GUARD represents zero
   context.reserve(20);
   mouth_stack.reserve(20);
   while ((c = t.gettoken()) != Token::END) {
@@ -299,23 +299,4 @@ std::string &read_string() {
   return buffer;
 }
 
-int main(int argc, char **argv) {
-  std::string &json_str = read_string();
-  try {
-    auto start = std::chrono::high_resolution_clock::now();
-    Serializer large_json(json_str);
-    Json_entity_shared_ptr p = large_json.serialize();
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-        end - start); // Calculate duration
-    if (argc == 2) {
-      print_json(p);
-    }
-    std::cout << "\nElapsed time: " << duration.count() << " milliseconds"
-              << std::endl; // Print duration in milliseconds
-  } catch (const char *err) {
-    std::cerr << err << '\n';
-    return 1;
-  }
-  return 0;
-}
+} // namespace SJSON

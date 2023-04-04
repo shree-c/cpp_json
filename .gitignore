@@ -6,3 +6,4 @@ failed
 large_test_files/*
 callgrind*
 vgcore*
+.vscode

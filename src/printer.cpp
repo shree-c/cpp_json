@@ -1,7 +1,8 @@
-#include "myjson.h"
 #include "print.h"
+#include "types.h"
 #include <iostream>
 #include <memory>
+namespace SJSON {
 
 int spaces_count = 0;
 
@@ -162,3 +163,5 @@ void print_token_type(Token t) {
     break;
   }
 }
+
+} // namespace SJSON
