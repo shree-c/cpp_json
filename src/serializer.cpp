@@ -20,12 +20,12 @@ inline double try_convert_to_double(std::string string_to_be_converted) {
 }
 
 void Serializer::push(std::string key, Json_entity_shared_ptr value) {
-  Json_obj_shared_ptr mouth_object = std::dynamic_pointer_cast<Json_obj>(mouth);
+  Json_obj_shared_ptr mouth_object = std::static_pointer_cast<Json_obj>(mouth);
   mouth_object->insert(key, value);
 }
 
 void Serializer::push(Json_entity_shared_ptr value) {
-  Json_arr_shared_ptr mouth_object = std::dynamic_pointer_cast<Json_arr>(mouth);
+  Json_arr_shared_ptr mouth_object = std::static_pointer_cast<Json_arr>(mouth);
   mouth_object->insert(value);
 }
 

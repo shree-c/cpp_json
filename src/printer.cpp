@@ -34,7 +34,7 @@ void Printer::print_colorful(std::string text, Color c, int spaces) {
 
 void Printer::print_array(Json_entity_shared_ptr x) {
   std::shared_ptr<Json_arr> temp_str_obj =
-      std::dynamic_pointer_cast<Json_arr>(x);
+      std::static_pointer_cast<Json_arr>(x);
   std::vector<std::shared_ptr<Json_entity>> vec = temp_str_obj->get_value();
   print_colorful("[\n", Color::MEGENTA, 0);
   spaces_count += 2;
@@ -54,7 +54,7 @@ void Printer::print_array(Json_entity_shared_ptr x) {
 
 void Printer::print_object(std::shared_ptr<Json_entity> x) {
   std::shared_ptr<Json_obj> temp_str_obj =
-      std::dynamic_pointer_cast<Json_obj>(x);
+      std::static_pointer_cast<Json_obj>(x);
   std::unordered_map<std::string, std::shared_ptr<Json_entity>> map =
       temp_str_obj->get_value();
   print_colorful("{\n", Color::MEGENTA, 0);
@@ -83,14 +83,14 @@ void Printer::print_json(std::shared_ptr<Json_entity> json_node) {
   case Data_type::STRING: {
     // std::cout << "printing string\n";
     std::shared_ptr<Json_string> temp_str_obj =
-        std::dynamic_pointer_cast<Json_string>(json_node);
+        std::static_pointer_cast<Json_string>(json_node);
     print_colorful("\"" + temp_str_obj->get_value() + "\"", Color::GREEN, 0);
     break;
   }
   case Data_type::NUMBER: {
     // std::cout << "printing number\n";
     std::shared_ptr<Json_number> temp_num_obj =
-        std::dynamic_pointer_cast<Json_number>(json_node);
+        std::static_pointer_cast<Json_number>(json_node);
     print_colorful(std::to_string(temp_num_obj->get_value()), Color::BLUE, 0);
     break;
   }
@@ -101,7 +101,7 @@ void Printer::print_json(std::shared_ptr<Json_entity> json_node) {
   case Data_type::BOOLEAN: {
     // std::cout << "printing boolean\n";
     std::shared_ptr<Json_bool> temp_bool_obj =
-        std::dynamic_pointer_cast<Json_bool>(json_node);
+        std::static_pointer_cast<Json_bool>(json_node);
     print_colorful((temp_bool_obj->get_value()) ? "true" : "false", Color::BLUE,
                    0);
     break;

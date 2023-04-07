@@ -7,3 +7,4 @@ large_test_files/*
 callgrind*
 vgcore*
 .vscode
+.per_bin
