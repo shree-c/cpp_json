@@ -24,11 +24,11 @@
 - create a new Serializer object with JSON string
 
 ```CPP
+std::string json_string{"{\"bar\": 10 }"}
 
 SJSON::Serializer foo(json_string);
 
 SJSON::Json_entity_shared_ptr foo_ptr = foo.serialize();
-
 ```
 
 - `Json_entity_shared_ptr` has `get_type()` method. It returns `SJSON::Data_type`
