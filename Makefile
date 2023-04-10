@@ -10,7 +10,7 @@ compile_test_file: serializer printer
 run_tests: compile_test_file
 	bash test/check_against_std_cases.bash .temp_test ./test_cases
 
-create_test_binary: serializer
+create_test_binary: serializer printer
 	g++ -std=c++20 test/check_performance.cpp serializer.o printer.o -o .per_bin -O3
 
 check_performance_against_large_file: create_test_binary

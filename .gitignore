@@ -8,3 +8,5 @@ callgrind*
 vgcore*
 .vscode
 .per_bin
+.temp_test
+*.o
