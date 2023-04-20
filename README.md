@@ -6,7 +6,6 @@
 
 - no memory leaks
 - no need to free memory: smart pointers are used
-- performs as fast\[or faster when <10MB\] as JSON.parse up to 10MB size of string
 - pretty printing
 
 ## How to use
